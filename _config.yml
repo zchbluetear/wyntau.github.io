@@ -71,15 +71,15 @@ kramdown:
 #iLotus configs
 iLotus:
   columns: 1
-  begin: 2011
+  begin: 2015
 
   # comments provider
-  comments:
-    provider: disqus
-    duoshuo:
-      short_name:
-    disqus:
-      short_name: isaymesite
+  # comments:
+  #   provider: disqus
+  #   duoshuo:
+  #     short_name:
+  #   disqus:
+  #     short_name: isaymesite
 
   archives_path: /archives.html
   contact_path: /contact.html
@@ -105,22 +105,19 @@ iLotus:
       icon: fa fa-user
       class: none
     - text: 博客源代码
-      url: https://github.com/Wyntau/wyntau.github.io
+      url: https://github.com/zchbluetear/zchbluetear.github.io
       icon: fa fa-github-square
       class: none
 
 #站点基础配置
 title: 自说Me话
-subTitle: I Say Me | 我说我自己 | 我说世界
-description: Wyntau's Individual Blog. 自说Me话,一个前端开发新手的网络记录,同喜欢网络,Linux,前端开发,爱折腾的人共同分享,记录折腾心得还有学习过程.
-keywords: Wyntau,Linux,Web,前端开发,自说Me话,ISayme,Internet
-url: http://isay.me
+subTitle: 求知若饥 | 虚怀若愚 | 简单可依赖
+description: java开发
+keywords: 技术&生活
+url: https://piecetime.cn/
 
 author:
-  name : Wyntau
-  email: wyntau@outlook.com
-  github: Wyntau
-  twitter: Wyntau
-  douban: lwent
-  QQ: 83692901
-  weibo: leftupme
+  name : Mr.Zhang
+  email: 1424490125@qq.com
+  github: zchbluetear
+  QQ: 1424490125
