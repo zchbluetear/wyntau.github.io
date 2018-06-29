@@ -14,7 +14,7 @@ tag: Java并发
 (FutureTask 实现了 RunnableFuture, RunnableFuture继承了Runnable和Future)。
 也就是说Future可以拿到异步执行任务的返回值。
 
-###一.下面来看一个简单的例子:
+**一.下面来看一个简单的例子:**
 
 ```
  public class CallableAndFuture {
@@ -43,7 +43,7 @@ tag: Java并发
 　　FutureTask实现了两个接口，Runnable和Future，所以它既可以作为Runnable被线程执行，又可以作为Future得到Callable的返回值，那么这个组合的使用有什么好处呢？假设有一个很耗时的返回值需要计算，并且这个返回值不是立刻需要的话，那么就可以使用这个组合，用另一个线程去计算返回值，而当前线程在使用这个返回值之前可以做其它的操作，等到需要这个返回值时，再通过Future得到，岂不美哉！
 
 
-###二.下面来看另一种方式使用Callable和Future，通过ExecutorService的submit方法执行Callable，并返回Future.
+**二.下面来看另一种方式使用Callable和Future，通过ExecutorService的submit方法执行Callable，并返回Future.**
 
 ```
 public class CallableAndFuture {

@@ -14,7 +14,7 @@ tag: Java并发
 从线程的角度看，目标变量就象是线程的本地变量，这也是类名中“Local”所要表达的意思。
 所以，在Java中编写线程局部变量的代码相对来说要笨拙一些，因此造成线程局部变量没有在Java开发者中得到很好的普及。
 
-###一. ThreadLocal的接口方法
+**一. ThreadLocal的接口方法**
 
 ThreadLocal类接口很简单，只有4个方法，我们先来了解一下：
 
@@ -26,11 +26,12 @@ ThreadLocal类接口很简单，只有4个方法，我们先来了解一下：
 
 * protected Object initialValue()	返回该线程局部变量的初始值，该方法是一个protected的方法，显然是为了让子类覆盖而设计的。这个方法是一个延迟调用方法，在线程第1次调用get()或set(Object)时才执行，并且仅执行1次。ThreadLocal中的缺省实现直接返回一个null。
 
-  值得一提的是，在JDK5.0中，ThreadLocal已经支持泛型，该类的类名已经变为ThreadLocal<T>。API方法也相应进行了调整，新版本的API方法分别是void set(T value)、T get()以及T initialValue()。
+值得一提的是，在JDK5.0中，ThreadLocal已经支持泛型，该类的类名已经变为ThreadLocal<T>。API方法也相应进行了调整，新版本的API方法分别是void set(T value)、T get()以及T initialValue()。
 
-  ThreadLocal是如何做到为每一个线程维护变量的副本的呢？其实实现的思路很简单：在ThreadLocal类中有一个Map，用于存储每一个线程的变量副本，Map中元素的键为线程对象，而值对应线程的变量副本。我们自己就可以提供一个简单的实现版本：
+ThreadLocal是如何做到为每一个线程维护变量的副本的呢？其实实现的思路很简单：在ThreadLocal类中有一个Map，用于存储每一个线程的变量副本，Map中元素的键为线程对象，而值对应线程的变量副本。我们自己就可以提供一个简单的实现版本：
 
-   ``` // ①通过匿名内部类覆盖ThreadLocal的initialValue()方法，指定初始值  
+```
+   // ①通过匿名内部类覆盖ThreadLocal的initialValue()方法，指定初始值  
     private static ThreadLocal<Integer> seqNum = new ThreadLocal<Integer>() {  
         public Integer initialValue() {  
            return 0;  
@@ -64,39 +65,40 @@ ThreadLocal类接口很简单，只有4个方法，我们先来了解一下：
         public void run() {  
             for (int i = 0; i < 3; i++) {  
                 // ④每个线程打出3个序列值  
-                System.out.println("thread[" + Thread.currentThread().getName() + "] --> sn["  
-                         + sn.getNextNum() + "]");  
+                System.out.println("thread[" + Thread.currentThread().getName()+ "] --> sn[" + sn.getNextNum() + "]");  
             }  
         }  
     }
-    ```
-  通常我们通过匿名内部类的方式定义ThreadLocal的子类，提供初始的变量值，如例子中①处所示。TestClient线程产生一组序列号，在③处，我们生成3个TestClient，它们共享同一个TestNum实例。运行以上代码，在控制台上输出以下的结果：
-
-  thread[Thread-0] --> sn[1]
-
-  thread[Thread-1] --> sn[1]
-
-  thread[Thread-2] --> sn[1]
-
-  thread[Thread-1] --> sn[2]
-
-  thread[Thread-0] --> sn[2]
-
-  thread[Thread-1] --> sn[3]
-
-  thread[Thread-2] --> sn[2]
-
-  thread[Thread-0] --> sn[3]
-
-  thread[Thread-2] --> sn[3]
-
-  考察输出的结果信息，我们发现每个线程所产生的序号虽然都共享同一个TestNum实例，但它们并没有发生相互干扰的情况，而是各自产生独立的序列号，这是因为我们通过ThreadLocal为每一个线程提供了单独的副本。
+```
+  
 
 
-###二.Thread & 同步机制的比较
+　　通常我们通过匿名内部类的方式定义ThreadLocal的子类，提供初始的变量值，如例子中①处所示。TestClient线程产生一组序列号，在③处，我们生成3个TestClient，它们共享同一个TestNum实例。运行以上代码，在控制台上输出以下的结果：
+
+　　thread[Thread-0] --> sn[1]
+
+　　thread[Thread-1] --> sn[1]
+
+　　thread[Thread-2] --> sn[1]
+
+　　thread[Thread-1] --> sn[2]
+
+　　thread[Thread-0] --> sn[2]
+
+　　thread[Thread-1] --> sn[3]
+
+　　thread[Thread-2] --> sn[2]
+
+　　thread[Thread-0] --> sn[3]
+
+　　thread[Thread-2] --> sn[3]
+
+　　考察输出的结果信息，我们发现每个线程所产生的序号虽然都共享同一个TestNum实例，但它们并没有发生相互干扰的情况，而是各自产生独立的序列号，这是因为我们通过ThreadLocal为每一个线程提供了单独的副本。
+  
+**二.Thread & 同步机制的比较**
 
 　　ThreadLocal和线程同步机制相比有什么优势呢？ThreadLocal和线程同步机制都是为了解决多线程中相同变量的访问冲突问题。
-
+   
 　　在同步机制中，通过对象的锁机制保证同一时间只有一个线程访问变量。这时该变量是多个线程共享的，使用同步机制要求程序慎密地分析什么时候对变量进行读写，什么时候需要锁定某个对象，什么时候释放对象锁等繁杂的问题，程序设计和编写难度相对较大。
 
 　　而ThreadLocal则从另一个角度来解决多线程的并发访问。ThreadLocal会为每一个线程提供一个独立的变量副本，从而隔离了多个线程对数据的访问冲突。因为每一个线程都拥有自己的变量副本，从而也就没有必要对该变量进行同步了。ThreadLocal提供了线程安全的共享对象，在编写多线程代码时，可以把不安全的变量封装进ThreadLocal。
@@ -173,7 +175,7 @@ public class ConnectionManager {
 }
 ```
 
-###三. java.lang.ThreadLocal<T>的具体实现
+**三.线程本地变量的具体实现**
 
 　　那么到底ThreadLocal类是如何实现这种“为每个线程提供不同的变量拷贝”的呢？先来看一下ThreadLocal的set()方法的源码是如何实现的：
 
@@ -231,10 +233,9 @@ private T setInitialValue() {
 }
 ```
 
-获取和当前线程绑定的值时，ThreadLocalMap对象是以this指向的ThreadLocal对象为键进行查找的，这当然和前面set()方法的代码是相呼应的。
+　　获取和当前线程绑定的值时，ThreadLocalMap对象是以this指向的ThreadLocal对象为键进行查找的，这当然和前面set()方法的代码是相呼应的。
 
-进一步地，我们可以创建不同的ThreadLocal实例来实现多个变量在不同线程间的访问隔离，为什么可以这么做？因为不同的ThreadLocal对象作为不同键，当然也可以在线程的ThreadLocalMap对象中设置不同的值了。通过ThreadLocal对象，在多线程中共享一个值和多个值的区别，就像你在一个HashMap对象中存储一个键值对和多个键值对一样，仅此而已。 
-   
+　　进一步地，我们可以创建不同的ThreadLocal实例来实现多个变量在不同线程间的访问隔离，为什么可以这么做？因为不同的ThreadLocal对象作为不同键，当然也可以在线程的ThreadLocalMap对象中设置不同的值了。通过ThreadLocal对象，在多线程中共享一个值和多个值的区别，就像你在一个HashMap对象中存储一个键值对和多个键值对一样，仅此而已。   
    
 
 
