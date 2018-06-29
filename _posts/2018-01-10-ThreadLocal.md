@@ -14,34 +14,29 @@ tag: Java并发
 从线程的角度看，目标变量就象是线程的本地变量，这也是类名中“Local”所要表达的意思。
 所以，在Java中编写线程局部变量的代码相对来说要笨拙一些，因此造成线程局部变量没有在Java开发者中得到很好的普及。
 
-一. ThreadLocal的接口方法
+###一. ThreadLocal的接口方法
 
 ThreadLocal类接口很简单，只有4个方法，我们先来了解一下：
 
-1.void set(Object value)   设置当前线程的线程局部变量的值。
+* void set(Object value)   设置当前线程的线程局部变量的值。
 
-2.public Object get()		该方法返回当前线程所对应的线程局部变量。
+* public Object get()		该方法返回当前线程所对应的线程局部变量。
 
-3.public void remove()	将当前线程局部变量的值删除，目的是为了减少内存的占用，该方法是JDK 5.0新增的方法。需要指出的是，当线程结束后，对应该线程的局部变量将自动被垃圾回收，所以显式调用该方法清除线程的局部变量并不是必须的操作，但它可以加快内存回收的速度。
+* public void remove()	将当前线程局部变量的值删除，目的是为了减少内存的占用，该方法是JDK 5.0新增的方法。需要指出的是，当线程结束后，对应该线程的局部变量将自动被垃圾回收，所以显式调用该方法清除线程的局部变量并不是必须的操作，但它可以加快内存回收的速度。
 
-4.protected Object initialValue()	返回该线程局部变量的初始值，该方法是一个protected的方法，显然是为了让子类覆盖而设计的。这个方法是一个延迟调用方法，在线程第1次调用get()或set(Object)时才执行，并且仅执行1次。ThreadLocal中的缺省实现直接返回一个null。
+* protected Object initialValue()	返回该线程局部变量的初始值，该方法是一个protected的方法，显然是为了让子类覆盖而设计的。这个方法是一个延迟调用方法，在线程第1次调用get()或set(Object)时才执行，并且仅执行1次。ThreadLocal中的缺省实现直接返回一个null。
 
-值得一提的是，在JDK5.0中，ThreadLocal已经支持泛型，该类的类名已经变为ThreadLocal<T>。API方法也相应进行了调整，新版本的API方法分别是void set(T value)、T get()以及T initialValue()。
+  值得一提的是，在JDK5.0中，ThreadLocal已经支持泛型，该类的类名已经变为ThreadLocal<T>。API方法也相应进行了调整，新版本的API方法分别是void set(T value)、T get()以及T initialValue()。
 
-ThreadLocal是如何做到为每一个线程维护变量的副本的呢？其实实现的思路很简单：在ThreadLocal类中有一个Map，用于存储每一个线程的变量副本，Map中元素的键为线程对象，而值对应线程的变量副本。我们自己就可以提供一个简单的实现版本：
+  ThreadLocal是如何做到为每一个线程维护变量的副本的呢？其实实现的思路很简单：在ThreadLocal类中有一个Map，用于存储每一个线程的变量副本，Map中元素的键为线程对象，而值对应线程的变量副本。我们自己就可以提供一个简单的实现版本：
 
-
-package com.test;  
-  
-public class TestNum {  
-   
-    // ①通过匿名内部类覆盖ThreadLocal的initialValue()方法，指定初始值  
+   ``` // ①通过匿名内部类覆盖ThreadLocal的initialValue()方法，指定初始值  
     private static ThreadLocal<Integer> seqNum = new ThreadLocal<Integer>() {  
         public Integer initialValue() {  
-            return 0;  
+           return 0;  
         }  
     };  
-  
+  	
     // ②获取下一个序列值  
     public int getNextNum() {  
         seqNum.set(seqNum.get() + 1);  
@@ -73,34 +68,32 @@ public class TestNum {
                          + sn.getNextNum() + "]");  
             }  
         }  
-    }  
-}  
+    }
+    ```
+  通常我们通过匿名内部类的方式定义ThreadLocal的子类，提供初始的变量值，如例子中①处所示。TestClient线程产生一组序列号，在③处，我们生成3个TestClient，它们共享同一个TestNum实例。运行以上代码，在控制台上输出以下的结果：
+
+  thread[Thread-0] --> sn[1]
+
+  thread[Thread-1] --> sn[1]
+
+  thread[Thread-2] --> sn[1]
+
+  thread[Thread-1] --> sn[2]
+
+  thread[Thread-0] --> sn[2]
+
+  thread[Thread-1] --> sn[3]
+
+  thread[Thread-2] --> sn[2]
+
+  thread[Thread-0] --> sn[3]
+
+  thread[Thread-2] --> sn[3]
+
+  考察输出的结果信息，我们发现每个线程所产生的序号虽然都共享同一个TestNum实例，但它们并没有发生相互干扰的情况，而是各自产生独立的序列号，这是因为我们通过ThreadLocal为每一个线程提供了单独的副本。
 
 
-通常我们通过匿名内部类的方式定义ThreadLocal的子类，提供初始的变量值，如例子中①处所示。TestClient线程产生一组序列号，在③处，我们生成3个TestClient，它们共享同一个TestNum实例。运行以上代码，在控制台上输出以下的结果：
-
-thread[Thread-0] --> sn[1]
-
-thread[Thread-1] --> sn[1]
-
-thread[Thread-2] --> sn[1]
-
-thread[Thread-1] --> sn[2]
-
-thread[Thread-0] --> sn[2]
-
-thread[Thread-1] --> sn[3]
-
-thread[Thread-2] --> sn[2]
-
-thread[Thread-0] --> sn[3]
-
-thread[Thread-2] --> sn[3]
-
-考察输出的结果信息，我们发现每个线程所产生的序号虽然都共享同一个TestNum实例，但它们并没有发生相互干扰的情况，而是各自产生独立的序列号，这是因为我们通过ThreadLocal为每一个线程提供了单独的副本。
-
-
-二.Thread & 同步机制的比较
+###二.Thread & 同步机制的比较
 
 　　ThreadLocal和线程同步机制相比有什么优势呢？ThreadLocal和线程同步机制都是为了解决多线程中相同变量的访问冲突问题。
 
@@ -117,8 +110,8 @@ thread[Thread-2] --> sn[3]
 
 TestDao：线程安全
 
+```
 package com.test;  
-  
 import java.sql.Connection;  
 import java.sql.SQLException;  
 import java.sql.Statement;  
@@ -145,13 +138,14 @@ public class TestDaoNew {
         Statement stat = getConnection().createStatement();  
     }  
 }
-
-　　
-不同的线程在使用TopicDao时，先判断connThreadLocal.get()是否是null，如果是null，则说明当前线程还没有对应的Connection对象，这时创建一个Connection对象并添加到本地线程变量中；如果不为null，则说明当前的线程已经拥有了Connection对象，直接使用就可以了。这样，就保证了不同的线程使用线程相关的Connection，而不会使用其它线程的Connection。因此，这个TopicDao就可以做到singleton共享了。
-
-当然，这个例子本身很粗糙，将Connection的ThreadLocal直接放在DAO只能做到本DAO的多个方法共享Connection时不发生线程安全问题，但无法和其它DAO共用同一个Connection，要做到同一事务多DAO共享同一Connection，必须在一个共同的外部类使用ThreadLocal保存Connection。
+```
 
 
+　　不同的线程在使用TopicDao时，先判断connThreadLocal.get()是否是null，如果是null，则说明当前线程还没有对应的Connection对象，这时创建一个Connection对象并添加到本地线程变量中；如果不为null，则说明当前的线程已经拥有了Connection对象，直接使用就可以了。这样，就保证了不同的线程使用线程相关的Connection，而不会使用其它线程的Connection。因此，这个TopicDao就可以做到singleton共享了。
+
+　　当然，这个例子本身很粗糙，将Connection的ThreadLocal直接放在DAO只能做到本DAO的多个方法共享Connection时不发生线程安全问题，但无法和其它DAO共用同一个Connection，要做到同一事务多DAO共享同一Connection，必须在一个共同的外部类使用ThreadLocal保存Connection。
+
+```
 public class ConnectionManager {  
   
     private static ThreadLocal<Connection> connectionHolder = new ThreadLocal<Connection>() {  
@@ -177,11 +171,13 @@ public class ConnectionManager {
         connectionHolder.set(conn);  
     }  
 }
+```
 
-三. java.lang.ThreadLocal<T>的具体实现
+###三. java.lang.ThreadLocal<T>的具体实现
 
-那么到底ThreadLocal类是如何实现这种“为每个线程提供不同的变量拷贝”的呢？先来看一下ThreadLocal的set()方法的源码是如何实现的：
+　　那么到底ThreadLocal类是如何实现这种“为每个线程提供不同的变量拷贝”的呢？先来看一下ThreadLocal的set()方法的源码是如何实现的：
 
+```
  public void set(T value) {  
       	Thread t = Thread.currentThread();  
        ThreadLocalMap map = getMap(t);  
@@ -189,15 +185,17 @@ public class ConnectionManager {
            map.set(this, value);  
        else  
            createMap(t, value);  
-}  
+　}  
+```
 
-在这个方法内部我们看到，首先通过getMap(Thread t)方法获取一个和当前线程相关的ThreadLocalMap，然后将变量的值设置到这个ThreadLocalMap对象中，当然如果获取到的ThreadLocalMap对象为空，就通过createMap方法创建。
+　　在这个方法内部我们看到，首先通过getMap(Thread t)方法获取一个和当前线程相关的ThreadLocalMap，然后将变量的值设置到这个ThreadLocalMap对象中，当然如果获取到的ThreadLocalMap对象为空，就通过createMap方法创建。
 
 
-线程隔离的秘密，就在于ThreadLocalMap这个类。ThreadLocalMap是ThreadLocal类的一个静态内部类，它实现了键值对的设置和获取（对比Map对象来理解），每个线程中都有一个独立的ThreadLocalMap副本，它所存储的值，只能被当前线程读取和修改。ThreadLocal类通过操作每一个线程特有的ThreadLocalMap副本，从而实现了变量访问在不同线程中的隔离。因为每个线程的变量都是自己特有的，完全不会有并发错误。还有一点就是，ThreadLocalMap存储的键值对中的键是this对象指向的ThreadLocal对象，而值就是你所设置的对象了.
+　　线程隔离的秘密，就在于ThreadLocalMap这个类。ThreadLocalMap是ThreadLocal类的一个静态内部类，它实现了键值对的设置和获取（对比Map对象来理解），每个线程中都有一个独立的ThreadLocalMap副本，它所存储的值，只能被当前线程读取和修改。ThreadLocal类通过操作每一个线程特有的ThreadLocalMap副本，从而实现了变量访问在不同线程中的隔离。因为每个线程的变量都是自己特有的，完全不会有并发错误。还有一点就是，ThreadLocalMap存储的键值对中的键是this对象指向的ThreadLocal对象，而值就是你所设置的对象了.
 
-为了加深理解，我们接着看上面代码中出现的getMap和createMap方法的实现：
+　　为了加深理解，我们接着看上面代码中出现的getMap和createMap方法的实现：
 
+```
 ThreadLocalMap getMap(Thread t) {  
     return t.threadLocals;  
 }
@@ -205,9 +203,11 @@ ThreadLocalMap getMap(Thread t) {
 void createMap(Thread t, T firstValue) {  
     t.threadLocals = new ThreadLocalMap(this, firstValue);  
 } 
+```
 
-接下来再看一下ThreadLocal类中的get()方法:
+　　接下来再看一下ThreadLocal类中的get()方法:
 
+```
 public T get() {  
     Thread t = Thread.currentThread();  
     ThreadLocalMap map = getMap(t);  
@@ -229,6 +229,7 @@ private T setInitialValue() {
            createMap(t, value);  
        return value;  
 }
+```
 
 获取和当前线程绑定的值时，ThreadLocalMap对象是以this指向的ThreadLocal对象为键进行查找的，这当然和前面set()方法的代码是相呼应的。
 
