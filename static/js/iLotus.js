@@ -13,6 +13,7 @@ $(document).ready(function() {
     /**
      *  goTop
      */
+        
     iLotus.goTop = {
         nodeName: "J-backTop",
         scrollHeight: "100",
